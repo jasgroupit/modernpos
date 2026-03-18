@@ -24,7 +24,7 @@ ENV DATABASE_PATH=/data/pos.db
 
 # Create data directory for persistent storage
 RUN mkdir -p /data
-VOLUME /data
+
 
 # Expose the port
 EXPOSE 4000
