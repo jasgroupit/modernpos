@@ -1,22 +1,34 @@
 FROM node:22-alpine
 
-# Install build dependencies
+# 1. Build dependencies for better-sqlite3
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
-# Copy everything from GitHub into /app
+# 2. Copy and install
+COPY package*.json ./
+RUN npm install
+
+# 3. Copy source
 COPY . .
 
-# --- DEBUG: THIS WILL SHOW THE ACTUAL FILE STRUCTURE ---
-# Look at your Railway logs for the output of this command!
-RUN ls -R
+# --- CRITICAL FIX: Ensure the directory structure is flat ---
+# If your files are inside a subfolder, move them to /app
+RUN if [ -d "src" ]; then echo "Src found"; else cp -r */src . 2>/dev/null || true; fi
+RUN if [ -f "index.html" ]; then echo "HTML found"; else cp */index.html . 2>/dev/null || true; fi
 
-# Try to install and build
-RUN npm install
+# 4. Environment Variables
+ENV NODE_ENV=production
+ENV DATABASE_PATH=/data/pos.db
+ENV PORT=4000
+
+# 5. Build the app 
+# We use --emptyOutDir to clear any old junk
 RUN npm run build
 
-ENV NODE_ENV=production
+# 6. Setup data dir (Railway Volume goes here)
 RUN mkdir -p /data
+
 EXPOSE 4000
+
 CMD ["npm", "start"]
