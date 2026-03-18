@@ -1,33 +1,32 @@
 FROM node:22-alpine
 
-# 1. Install build dependencies for native modules (better-sqlite3)
+# 1. Build tools for better-sqlite3
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
-# 2. Copy package files and install ALL deps (Vite needs devDeps to build)
+# 2. Install dependencies
 COPY package*.json ./
 RUN npm install
 
-# 3. Copy EVERYTHING else (Ensures /src/main.tsx is available for Vite)
+# 3. Copy everything else
 COPY . .
 
-# 4. Set environment variables BEFORE the build
-ENV NODE_ENV=production
-ENV PORT=4000
-ENV DATABASE_PATH=/data/pos.db
+# --- DEBUG STEP: This will show you exactly what files are in the container ---
+RUN ls -R /app/src && ls -al /app/index.html
 
-# 5. Build the frontend (This now has access to the /src folder)
+# 4. Environment variables
+ENV NODE_ENV=production
+ENV DATABASE_PATH=/data/pos.db
+# Railway usually provides the PORT, but we set a default
+ENV PORT=4000 
+
+# 5. Build the app
 RUN npm run build
 
-# 6. Create data directory (Railway will mount the Volume here)
-# We do NOT use the "VOLUME" command here to avoid the Railway error.
-RUN mkdir -p /data && chown -R node:node /data
-
-# 7. Switch to a non-root user for security (optional but recommended)
-USER node
+# 6. Setup persistent data folder (No VOLUME command to avoid Railway error)
+RUN mkdir -p /data
 
 EXPOSE 4000
 
-# 8. Start the application
 CMD ["npm", "start"]
