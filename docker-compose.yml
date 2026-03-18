@@ -1,0 +1,10 @@
+services:
+  pos-app:
+    build: .
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./pos.db:/data/pos.db
+    environment:
+      - NODE_ENV=production
+    restart: always
